@@ -5,7 +5,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(600, 600, WEBGL);
+  createCanvas(windowWidth * 0.6, windowHeight, WEBGL);
   pixelDensity(1)
   noStroke()
   shader(sh)
@@ -15,7 +15,7 @@ function setup() {
 function draw() {
   clear()
   background(0)
-  sh.setUniform("millis", millis())
+  sh.setUniform("millis", millis() / 1000)
   
   rect(0, 0, width, height)
 }

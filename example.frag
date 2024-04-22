@@ -56,7 +56,11 @@ float DE(vec3 pos) {
 
 float map(vec3 p) {
     vec3 bulbPosition = p - vec3(0., 1., 0.);
-    float bulb = DE(bulbPosition);
+    bulbPosition.xz *= rotate2D(sin(millis * 0.1));
+    bulbPosition.yz *= rotate2D(sin(millis * 0.1));
+    float scale = sin(millis * 0.5) * 0.1 + .47;
+
+    float bulb = DE(bulbPosition * scale) / scale;
 
     return bulb;
 }
@@ -72,32 +76,35 @@ void main() {
     vec3 rayDirection = normalize(vec3(uv, 1));
     vec3 col = vec3(0.);
 
+    rayOrigin.xz *= rotate2D(millis * 0.1);
+    rayDirection.xz *= rotate2D(millis * 0.1);
+
     float t = 0.; // total distance travelled
 
-    /* // vertical camera rotatuion
-    rayOrigin.yz *= rotate2D(-m.y * 0.1);
-    rayDirection.yz *= rotate2D(-m.y * 0.1);
-
-    // camera rotation
-    rayOrigin.xz *= rotate2D(-m.x * 0.1);
-    rayDirection.xz *= rotate2D(-m.x * 0.1); */
-
     // Raymarching
-    for(int i = 1; i < marchingSteps; i++) {
-
+    int steps = 0;
+    for(int i = 0; i < marchingSteps; i++) {
+        steps += 1;
         vec3 p = rayOrigin + rayDirection * t; // position along the way
 
         float d = map(p); // current distance from the scene 
 
         t += d;
 
-        if(d < 0.001 || t > 100.)
+        if(d < 0.0008 || t > 100.)
             break;
 
     }
 
     // coloring 
-    col = vec3(t * 0.1);
+
+    if(t > 100.) {
+        // paint background
+        col = vec3(0.);
+    } else {
+
+        col = vec3(1.0 - float(steps) / float(marchingSteps));
+    }
 
     gl_FragColor = vec4(col, 1.);
 }
