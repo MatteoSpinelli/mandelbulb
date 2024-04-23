@@ -9,6 +9,11 @@ uniform vec2 iMouse;
 const int marchingSteps = 80;
 const float Power = 8.;
 
+vec3 originTrap = vec3(0.0, 0.0, 0.0);
+float planeTrapX = 0.0;
+float planeTrapY = 0.0;
+float planeTrapZ = 0.0;
+
 float sdSphere(vec3 p, float radius) {
     return length(p) - radius; // distance to a sphere of radius r  
 }
@@ -28,14 +33,26 @@ mat2 rotate2D(float angle) {
     return mat2(c, -s, s, c);
 }
 
-float DE(vec3 pos) {
+float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out float minDistToPlaneY, out float minDistToPlaneZ) {
     vec3 z = pos;
     float dr = 1.0;
     float r = 0.0;
+
+    minDistToOrigin = 1e20;
+    minDistToPlaneX = 1e20;
+    minDistToPlaneY = 1e20;
+    minDistToPlaneZ = 1e20;
+
     for(int i = 0; i < 80; i++) {
         r = length(z);
         if(r > 2.)
             break;
+
+         // Update the trap distances
+        minDistToOrigin = min(minDistToOrigin, length(z - originTrap));
+        minDistToPlaneX = min(minDistToPlaneX, abs(z.x - planeTrapX));
+        minDistToPlaneY = min(minDistToPlaneY, abs(z.y - planeTrapY));
+        minDistToPlaneZ = min(minDistToPlaneZ, abs(z.z - planeTrapZ));
 
 		// convert to polar coordinates
         float theta = acos(z.z / r);
@@ -54,13 +71,13 @@ float DE(vec3 pos) {
     return 0.5 * log(r) * r / dr;
 }
 
-float map(vec3 p) {
+float map(vec3 p, out float minDistToOrigin, out float minDistToPlaneX, out float minDistToPlaneY, out float minDistToPlaneZ) {
     vec3 bulbPosition = p - vec3(0., 1., 0.);
     bulbPosition.xz *= rotate2D(sin(millis * 0.1));
     bulbPosition.yz *= rotate2D(sin(millis * 0.1));
     float scale = sin(millis * 0.5) * 0.1 + .47;
 
-    float bulb = DE(bulbPosition * scale) / scale;
+    float bulb = DE(bulbPosition * scale, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ) / scale;
 
     return bulb;
 }
@@ -80,6 +97,7 @@ void main() {
     rayDirection.xz *= rotate2D(millis * 0.1);
 
     float t = 0.; // total distance travelled
+    float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
 
     // Raymarching
     int steps = 0;
@@ -87,7 +105,7 @@ void main() {
         steps += 1;
         vec3 p = rayOrigin + rayDirection * t; // position along the way
 
-        float d = map(p); // current distance from the scene 
+        float d = map(p, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
 
         t += d;
 
@@ -100,10 +118,14 @@ void main() {
 
     if(t > 100.) {
         // paint background
-        col = vec3(0.);
+        col = vec3(0.82, 0.9, 0.93);
     } else {
 
-        col = vec3(1.0 - float(steps) / float(marchingSteps));
+        vec3 baseColor = vec3(0.91, 0.69, 0.11); // Some arbitrary base color
+        vec3 colorModifier = vec3(minDistToPlaneX * 0.1, minDistToPlaneY * 0.1, minDistToPlaneZ * 0.1);
+        float ambientFactor = minDistToOrigin; // Simulating ambient occlusion
+        col = baseColor + colorModifier;
+        col *= ambientFactor; // Apply ambient occlusion effect
     }
 
     gl_FragColor = vec4(col, 1.);
