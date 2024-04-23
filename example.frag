@@ -122,9 +122,12 @@ void main() {
     } else {
 
         vec3 baseColor = vec3(0.91, 0.69, 0.11); // Some arbitrary base color
-        vec3 colorModifier = vec3(minDistToPlaneX * 0.1, minDistToPlaneY * 0.1, minDistToPlaneZ * 0.1);
+
+        baseColor = mix(baseColor, vec3(0.28, 0.24, 0.14), clamp(0.1, 0.6, minDistToPlaneX));
+        baseColor = mix(baseColor, vec3(0.74, 0.25, 0.25), clamp(0.1, 0.6, minDistToPlaneY));
+        baseColor = mix(baseColor, vec3(0.84, 0.68, 0.42), clamp(0.1, 0.6, minDistToPlaneZ));
         float ambientFactor = minDistToOrigin; // Simulating ambient occlusion
-        col = baseColor + colorModifier;
+        col = baseColor;
         col *= ambientFactor; // Apply ambient occlusion effect
     }
 
