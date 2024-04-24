@@ -6,3 +6,20 @@ html, body {
 canvas {
   display: block;
 }
+
+.code {
+  width: 40vw;
+  height: 100vh;
+  display: inline-block;
+}
+
+.code img {
+  width: 40vw;
+  height: 100vh;
+}
+
+
+body {
+  display: flex;
+  flex-direction: row-reverse;
+}

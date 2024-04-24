@@ -48,23 +48,19 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
         if(r > 2.)
             break;
 
-         // Update the trap distances
         minDistToOrigin = min(minDistToOrigin, length(z - originTrap));
         minDistToPlaneX = min(minDistToPlaneX, abs(z.x - planeTrapX));
         minDistToPlaneY = min(minDistToPlaneY, abs(z.y - planeTrapY));
         minDistToPlaneZ = min(minDistToPlaneZ, abs(z.z - planeTrapZ));
 
-		// convert to polar coordinates
         float theta = acos(z.z / r);
         float phi = atan(z.y, z.x);
         dr = pow(r, Power - 1.0) * Power * dr + 1.0;
 
-		// scale and rotate the point
         float zr = pow(r, Power);
         theta = theta * Power;
         phi = phi * Power;
 
-		// convert back to cartesian coordinates
         z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
         z += pos;
     }
