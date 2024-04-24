@@ -16,7 +16,51 @@
 
   <body>
     <div class="code">
-      <img src="code.png" alt="sketch">
+      <pre>
+        <code class="glsl">
+          float DE(
+            vec3 pos, 
+            out float minDistToOrigin, 
+            out float minDistToPlaneX, 
+            out float minDistToPlaneY, 
+            out float minDistToPlaneZ 
+          ) {
+
+            vec3 z = pos;
+            float dr = 1.0;
+            float r = 0.0;
+        
+            minDistToOrigin = 1e20;
+            minDistToPlaneX = 1e20;
+            minDistToPlaneY = 1e20;
+            minDistToPlaneZ = 1e20;
+        
+            for(int i = 0; i < 80; i++) {
+                r = length(z);
+                if(r > 2.)
+                    break;
+        
+                minDistToOrigin = min(minDistToOrigin, length(z - originTrap));
+                minDistToPlaneX = min(minDistToPlaneX, abs(z.x - planeTrapX));
+                minDistToPlaneY = min(minDistToPlaneY, abs(z.y - planeTrapY));
+                minDistToPlaneZ = min(minDistToPlaneZ, abs(z.z - planeTrapZ));
+        
+                float theta = acos(z.z / r);
+                float phi = atan(z.y, z.x);
+                dr = pow(r, Power - 1.0) * Power * dr + 1.0;
+        
+                float zr = pow(r, Power);
+                theta = theta * Power;
+                phi = phi * Power;
+        
+                z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), 
+                cos(theta));
+                z += pos;
+            }
+            return 0.5 * log(r) * r / dr;
+        }
+        </code>
+      </pre>
     </div>
     <script src="sketch.js"></script>
   </body>
