@@ -7,25 +7,13 @@ uniform vec2 iResolution;
 uniform vec2 iMouse;
 
 const int marchingSteps = 80;
+const int marchingStepsShadow = 50;
 const float Power = 8.;
 
 vec3 originTrap = vec3(0.0, 0.0, 0.0);
 float planeTrapX = 0.0;
 float planeTrapY = 0.0;
 float planeTrapZ = 0.0;
-
-float sdSphere(vec3 p, float radius) {
-    return length(p) - radius; // distance to a sphere of radius r  
-}
-
-float sdBox(vec3 p, vec3 b) {
-    vec3 q = abs(p) - b;
-    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
-}
-
-vec3 rotate3D(vec3 p, vec3 axis, float angle) {
-    return mix(dot(axis, p) * axis, p, cos(angle) + cross(axis, p) * sin(angle));
-}
 
 mat2 rotate2D(float angle) {
     float s = sin(angle);
@@ -78,11 +66,29 @@ float map(vec3 p, out float minDistToOrigin, out float minDistToPlaneX, out floa
     return bulb;
 }
 
+float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
+    float res = 1.0;
+    float t = mint;
+    float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
+    for(int i = 0; i < marchingStepsShadow; i++) {
+        float h = map(ro + rd * t, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
+        if(h < 0.00009)
+            return 0.0;
+        res = min(res, k * h / t);
+        t += h;
+        if(t >= maxt)
+            break;
+    }
+    return res;
+}
+
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy * 2. - 1.;
     uv.x = uv.x * (iResolution.x / iResolution.y);
     vec2 m = iMouse.xy / iResolution.xy * 2. - 1.;
     m.x = m.x * (iResolution.x / iResolution.y);
+
+    vec3 lightSource = vec3(0., 0., -10.);
 
     // initialization step
     vec3 rayOrigin = vec3(0., 1., -3.); // ray origin, aka camera position
@@ -97,9 +103,10 @@ void main() {
 
     // Raymarching
     int steps = 0;
+    vec3 p;
     for(int i = 0; i < marchingSteps; i++) {
         steps += 1;
-        vec3 p = rayOrigin + rayDirection * t; // position along the way
+        p = rayOrigin + rayDirection * t; // position along the way
 
         float d = map(p, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
 
@@ -108,6 +115,12 @@ void main() {
         if(d < 0.0008 || t > 100.)
             break;
 
+    }
+    float shadow = 1.;
+    if(t < 100.) {
+        rayOrigin = p;
+        rayDirection = normalize(lightSource - rayOrigin);
+        shadow = softshadow(rayOrigin, rayDirection, 0.001, 100., 8.);
     }
 
     // coloring 
@@ -125,6 +138,7 @@ void main() {
         float ambientFactor = minDistToOrigin; // Simulating ambient occlusion
         col = baseColor;
         col *= ambientFactor; // Apply ambient occlusion effect
+        col *= shadow; // Apply shadow
     }
 
     gl_FragColor = vec4(col, 1.);
