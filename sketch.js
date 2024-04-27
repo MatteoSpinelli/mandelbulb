@@ -1,7 +1,7 @@
 let sh
 
 function preload() {
-  sh = loadShader("example.vert", "example.frag")
+  sh = loadShader("bulb.vert", "bulb.frag")
 }
 
 function setup() {
