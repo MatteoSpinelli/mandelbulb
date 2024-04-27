@@ -8,7 +8,6 @@ uniform vec2 iMouse;
 
 const int marchingSteps = 80;
 const int marchingStepsShadow = 50;
-const float Power = 8.;
 
 vec3 originTrap = vec3(0.0, 0.0, 0.0);
 float planeTrapX = 0.0;
@@ -31,6 +30,8 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
     minDistToPlaneY = 1e20;
     minDistToPlaneZ = 1e20;
 
+    float power = 8.;
+
     for(int i = 0; i < 80; i++) {
         r = length(z);
         if(r > 2.)
@@ -43,11 +44,11 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
 
         float theta = acos(z.z / r);
         float phi = atan(z.y, z.x);
-        dr = pow(r, Power - 1.0) * Power * dr + 1.0;
+        dr = pow(r, power - 1.0) * power * dr + 1.0;
 
-        float zr = pow(r, Power);
-        theta = theta * Power;
-        phi = phi * Power;
+        float zr = pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
 
         z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
         z += pos;
@@ -98,6 +99,8 @@ void main() {
     rayOrigin.xz *= rotate2D(millis * 0.1);
     rayDirection.xz *= rotate2D(millis * 0.1);
 
+    lightSource.xz *= rotate2D(millis * 0.1);
+
     float t = 0.; // total distance travelled
     float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
 
@@ -127,7 +130,8 @@ void main() {
 
     if(t > 100.) {
         // paint background
-        col = vec3(0.82, 0.9, 0.93);
+
+        col = exp(uv.y - 2.0) * vec3(0.4, 1.6, 1.0);
     } else {
 
         vec3 baseColor = vec3(0.91, 0.69, 0.11); // Some arbitrary base color
