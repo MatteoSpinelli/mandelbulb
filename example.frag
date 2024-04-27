@@ -87,7 +87,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy * 2. - 1.;
     uv.x = uv.x * (iResolution.x / iResolution.y);
 
-    vec3 lightSource = vec3(0., 0., -10.);
+    vec3 lightSource = vec3(-3., 0., -10.);
 
     // initialization step
     vec3 rayOrigin = vec3(0., 1., -3.); // ray origin, aka camera position
