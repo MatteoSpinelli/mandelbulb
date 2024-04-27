@@ -47,7 +47,7 @@ Project Link: https://github.com/MatteoSpinelli/mandelbulb
 
 [Introduction to raymarching](https://www.youtube.com/watch?v=khblXafu7iA&list=WL&index=2)
 
-[SDF to primitive objects](https://iquilezles.org/articles/distfunctions/)
+[SDF for primitive objects](https://iquilezles.org/articles/distfunctions/)
 
 [Mandelbulb examples and formula](https://iquilezles.org/articles/mandelbulb/)
 
