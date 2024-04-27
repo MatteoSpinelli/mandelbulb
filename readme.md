@@ -9,7 +9,7 @@ You can view a live demo of the Mandelbulb renderer at: [https://mandelbulb-two.
 ## Features
 
 - **3D Rendering:** Utilizes WebGL for rendering complex 3D fractal structures in real-time.
-- **Raymarching:** raymarching is used with the mandelbulb's distamce estimator to render the bulb in real time.
+- **Raymarching:** raymarching is used with the mandelbulb's distance estimator to render the bulb in real time.
 - **Shader-Based Calculation:** Fractal calculations are performed using GLSL shaders for efficient computation.
 
 ## Installation
