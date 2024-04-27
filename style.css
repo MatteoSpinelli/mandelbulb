@@ -12,16 +12,17 @@ canvas {
   width: 40vw;
   height: 100vh;
   display: inline-block;
-  background: #f4f4f4;
+  background: #0e0e0e;
 }
 
 .code code {
   text-wrap: wrap;
   text-align: justify;
+  color: white;
 }
 
 pre {
-  background: #f4f4f4;
+  background: #0e0e0e;
   border-left: 3px solid #f36d33;
   color: #666;
   font-size: 0.8rem;
