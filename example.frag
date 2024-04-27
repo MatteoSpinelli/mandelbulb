@@ -30,7 +30,7 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
     minDistToPlaneY = 1e20;
     minDistToPlaneZ = 1e20;
 
-    float power = 8.;
+    float power = sin(millis / 10.) * 3. + 8.;
 
     for(int i = 0; i < 80; i++) {
         r = length(z);
@@ -86,8 +86,6 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy * 2. - 1.;
     uv.x = uv.x * (iResolution.x / iResolution.y);
-    vec2 m = iMouse.xy / iResolution.xy * 2. - 1.;
-    m.x = m.x * (iResolution.x / iResolution.y);
 
     vec3 lightSource = vec3(0., 0., -10.);
 
@@ -130,18 +128,16 @@ void main() {
 
     if(t > 100.) {
         // paint background
-
         col = exp(uv.y - 2.0) * vec3(0.4, 1.6, 1.0);
     } else {
 
         vec3 baseColor = vec3(0.91, 0.69, 0.11); // Some arbitrary base color
-
-        baseColor = mix(baseColor, vec3(0.28, 0.24, 0.14), clamp(0.1, 0.6, minDistToPlaneX));
-        baseColor = mix(baseColor, vec3(0.74, 0.25, 0.25), clamp(0.1, 0.6, minDistToPlaneY));
-        baseColor = mix(baseColor, vec3(0.84, 0.68, 0.42), clamp(0.1, 0.6, minDistToPlaneZ));
-        float ambientFactor = minDistToOrigin; // Simulating ambient occlusion
+        baseColor = mix(baseColor, vec3(0.28, 0.24, 0.14), clamp(minDistToPlaneX, 0.01, 0.6));
+        baseColor = mix(baseColor, vec3(0.74, 0.25, 0.25), clamp(minDistToPlaneY, 0.01, 0.6));
+        baseColor = mix(baseColor, vec3(0.84, 0.68, 0.42), clamp(minDistToPlaneZ, 0.01, 0.6));
+        float ambientFactor = clamp(minDistToOrigin, 0.01, 1.3); // Simulating ambient occlusion
         col = baseColor;
-        col *= ambientFactor; // Apply ambient occlusion effect
+        col *= ambientFactor + 0.1; // Apply ambient occlusion effect
         col *= shadow; // Apply shadow
     }
 
