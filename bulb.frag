@@ -4,6 +4,7 @@ varying vec2 pos;
 
 uniform float millis;
 uniform vec2 iResolution;
+uniform vec2 dir;
 uniform vec2 iMouse;
 
 const int marchingSteps = 80;
@@ -30,7 +31,7 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
     minDistToPlaneY = 1e20;
     minDistToPlaneZ = 1e20;
 
-    float power = sin(millis / 10.) * 3. + 8.;
+    float power = 8.;
 
     for(int i = 0; i < 80; i++) {
         r = length(z);
@@ -58,9 +59,7 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
 
 float map(vec3 p, out float minDistToOrigin, out float minDistToPlaneX, out float minDistToPlaneY, out float minDistToPlaneZ) {
     vec3 bulbPosition = p - vec3(0., 1., 0.);
-    bulbPosition.xz *= rotate2D(sin(millis * 0.1));
-    bulbPosition.yz *= rotate2D(sin(millis * 0.1));
-    float scale = sin(millis * 0.5) * 0.1 + .47;
+    float scale = 1.;
 
     float bulb = DE(bulbPosition * scale, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ) / scale;
 
@@ -73,7 +72,7 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
     float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
     for(int i = 0; i < marchingStepsShadow; i++) {
         float h = map(ro + rd * t, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
-        if(h < 0.00009)
+        if(h < 0.000009)
             return 0.0;
         res = min(res, k * h / t);
         t += h;
@@ -86,18 +85,20 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy * 2. - 1.;
     uv.x = uv.x * (iResolution.x / iResolution.y);
+    vec2 m = iMouse.xy / iResolution.xy;
+    m.x = m.x * (iResolution.x / iResolution.y);
 
     vec3 lightSource = vec3(-3., 0., -10.);
 
     // initialization step
-    vec3 rayOrigin = vec3(0., 1., -3.); // ray origin, aka camera position
+    vec3 rayOrigin = vec3(dir.x, 1., dir.y); // ray origin, aka camera position
     vec3 rayDirection = normalize(vec3(uv, 1));
     vec3 col = vec3(0.);
 
-    rayOrigin.xz *= rotate2D(millis * 0.1);
-    rayDirection.xz *= rotate2D(millis * 0.1);
-
-    lightSource.xz *= rotate2D(millis * 0.1);
+    rayOrigin.xz *= rotate2D(iMouse.x / 100.);
+    rayDirection.xz *= rotate2D(iMouse.x / 100.);
+    rayOrigin.yz *= rotate2D(iMouse.y / 100.);
+    rayDirection.yz *= rotate2D(iMouse.y / 100.);
 
     float t = 0.; // total distance travelled
     float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
@@ -113,7 +114,7 @@ void main() {
 
         t += d;
 
-        if(d < 0.0008 || t > 100.)
+        if(d < 0.00008 || t > 100.)
             break;
 
     }
