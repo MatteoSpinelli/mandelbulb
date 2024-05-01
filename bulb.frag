@@ -7,25 +7,12 @@ uniform vec2 iResolution;
 uniform vec2 iMouse;
 
 const int marchingSteps = 80;
-const float Power = 8.;
+const int marchingStepsShadow = 50;
 
 vec3 originTrap = vec3(0.0, 0.0, 0.0);
 float planeTrapX = 0.0;
 float planeTrapY = 0.0;
 float planeTrapZ = 0.0;
-
-float sdSphere(vec3 p, float radius) {
-    return length(p) - radius; // distance to a sphere of radius r  
-}
-
-float sdBox(vec3 p, vec3 b) {
-    vec3 q = abs(p) - b;
-    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
-}
-
-vec3 rotate3D(vec3 p, vec3 axis, float angle) {
-    return mix(dot(axis, p) * axis, p, cos(angle) + cross(axis, p) * sin(angle));
-}
 
 mat2 rotate2D(float angle) {
     float s = sin(angle);
@@ -43,6 +30,8 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
     minDistToPlaneY = 1e20;
     minDistToPlaneZ = 1e20;
 
+    float power = sin(millis / 10.) * 3. + 8.;
+
     for(int i = 0; i < 80; i++) {
         r = length(z);
         if(r > 2.)
@@ -55,11 +44,11 @@ float DE(vec3 pos, out float minDistToOrigin, out float minDistToPlaneX, out flo
 
         float theta = acos(z.z / r);
         float phi = atan(z.y, z.x);
-        dr = pow(r, Power - 1.0) * Power * dr + 1.0;
+        dr = pow(r, power - 1.0) * power * dr + 1.0;
 
-        float zr = pow(r, Power);
-        theta = theta * Power;
-        phi = phi * Power;
+        float zr = pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
 
         z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
         z += pos;
@@ -78,11 +67,27 @@ float map(vec3 p, out float minDistToOrigin, out float minDistToPlaneX, out floa
     return bulb;
 }
 
+float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
+    float res = 1.0;
+    float t = mint;
+    float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
+    for(int i = 0; i < marchingStepsShadow; i++) {
+        float h = map(ro + rd * t, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
+        if(h < 0.00009)
+            return 0.0;
+        res = min(res, k * h / t);
+        t += h;
+        if(t >= maxt)
+            break;
+    }
+    return res;
+}
+
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy * 2. - 1.;
     uv.x = uv.x * (iResolution.x / iResolution.y);
-    vec2 m = iMouse.xy / iResolution.xy * 2. - 1.;
-    m.x = m.x * (iResolution.x / iResolution.y);
+
+    vec3 lightSource = vec3(-3., 0., -10.);
 
     // initialization step
     vec3 rayOrigin = vec3(0., 1., -3.); // ray origin, aka camera position
@@ -92,14 +97,17 @@ void main() {
     rayOrigin.xz *= rotate2D(millis * 0.1);
     rayDirection.xz *= rotate2D(millis * 0.1);
 
+    lightSource.xz *= rotate2D(millis * 0.1);
+
     float t = 0.; // total distance travelled
     float minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ;
 
     // Raymarching
     int steps = 0;
+    vec3 p;
     for(int i = 0; i < marchingSteps; i++) {
         steps += 1;
-        vec3 p = rayOrigin + rayDirection * t; // position along the way
+        p = rayOrigin + rayDirection * t; // position along the way
 
         float d = map(p, minDistToOrigin, minDistToPlaneX, minDistToPlaneY, minDistToPlaneZ);
 
@@ -109,22 +117,28 @@ void main() {
             break;
 
     }
+    float shadow = 1.;
+    if(t < 100.) {
+        rayOrigin = p;
+        rayDirection = normalize(lightSource - rayOrigin);
+        shadow = softshadow(rayOrigin, rayDirection, 0.001, 100., 8.);
+    }
 
     // coloring 
 
     if(t > 100.) {
         // paint background
-        col = vec3(0.82, 0.9, 0.93);
+        col = exp(uv.y - 2.0) * vec3(0.4, 1.6, 1.0);
     } else {
 
         vec3 baseColor = vec3(0.91, 0.69, 0.11); // Some arbitrary base color
-
-        baseColor = mix(baseColor, vec3(0.28, 0.24, 0.14), clamp(0.1, 0.6, minDistToPlaneX));
-        baseColor = mix(baseColor, vec3(0.74, 0.25, 0.25), clamp(0.1, 0.6, minDistToPlaneY));
-        baseColor = mix(baseColor, vec3(0.84, 0.68, 0.42), clamp(0.1, 0.6, minDistToPlaneZ));
-        float ambientFactor = minDistToOrigin; // Simulating ambient occlusion
+        baseColor = mix(baseColor, vec3(0.28, 0.24, 0.14), clamp(minDistToPlaneX, 0.01, 0.6));
+        baseColor = mix(baseColor, vec3(0.74, 0.25, 0.25), clamp(minDistToPlaneY, 0.01, 0.6));
+        baseColor = mix(baseColor, vec3(0.84, 0.68, 0.42), clamp(minDistToPlaneZ, 0.01, 0.6));
+        float ambientFactor = clamp(minDistToOrigin, 0.01, 1.3); // Simulating ambient occlusion
         col = baseColor;
-        col *= ambientFactor; // Apply ambient occlusion effect
+        col *= ambientFactor + 0.1; // Apply ambient occlusion effect
+        col *= shadow; // Apply shadow
     }
 
     gl_FragColor = vec4(col, 1.);
