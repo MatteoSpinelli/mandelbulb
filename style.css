@@ -4,35 +4,10 @@ html, body {
   overflow: hidden;
 }
 
-canvas {
-  display: block;
-}
-
-.code {
-  width: 40vw;
-  height: 100vh;
-  display: inline-block;
-  background: #0e0e0e;
-}
-
-.code code {
-  text-wrap: wrap;
-  text-align: justify;
-  color: white;
-}
-
-pre {
-  background: #0e0e0e;
-  border-left: 3px solid #f36d33;
-  color: #666;
-  font-size: 0.8rem;
-  overflow: auto;
-  padding: 1em 1.5em;
-  word-wrap: break-word;
-}
 
 
-body {
-  display: flex;
-  flex-direction: row-reverse;
-}
+
+
+
+
+
